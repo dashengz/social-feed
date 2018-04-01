@@ -1,0 +1,11 @@
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+# Secret
+secret.php
+
+# Unrelated
+events.php
