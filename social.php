@@ -1,10 +1,8 @@
 <?php
 /**
  * TC Social Feed
- * @version v0.1.0
+ * @version v0.3.0
  * @author Jonathan Dasheng Zhang (zhang10@tc.columbia.edu)
- * Date: 3/31/2018
- * Time: 12:05 PM
  */
 require_once('secret.php');
 
@@ -14,26 +12,41 @@ $api_instagram = 'https://api.instagram.com';
 // If these token ever expire, need to regenerate with necessary credentials
 // For Twitter, just uncomment auth_twitter() and regenerate
 $token_twitter = $TOKEN_T;
+
 // For Instagram, need to visit
 // https://api.instagram.com/oauth/authorize/?client_id={CLIENT_ID}&redirect_uri=https://www.tc.columbia.edu&response_type=code&scope=public_content
 // And regenerate the CODE for auth_instagram()
-// Currently, the app is in sandbox mode, and is owned by Jonathan Zhang (dz2276@tc.columbia.edu), and needs to be authenticated using Jonathan's login
+// Currently, the app is in sandbox mode, and is owned by Jonathan Zhang (zhang10@tc.columbia.edu)
+// To show your feed, you need to be added as a sandbox user, and follow authentication to generate an access token.
+// Detailed instruction coming soon.
 $token_instagram = $TOKEN_I;
+
+$handle_twitter = '';
+$handle_instagram = '';
+if (isset($_REQUEST['twitter'])) {
+    $handle_twitter = $_REQUEST['twitter'];
+}
+if (isset($_REQUEST['instagram'])) {
+    $handle_instagram = $_REQUEST['instagram'];
+}
 
 $request_timeline = '/1.1/statuses/user_timeline.json';
 $params_timeline = array(
-    'screen_name' => 'TeachersCollege',
-    'count' => '1'
+    'screen_name' => $handle_twitter,
+    'count' => '3'
 );
 
-$user_id_instagram = get_user_id_instagram('TeachersCollege');
-$request_media = '/v1/users/' . $user_id_instagram . '/media/recent';
+$request_media = '/v1/users/self/media/recent';
 $params_media = array(
-    'count' => '1'
+    'count' => '3'
 );
 
-echo json_encode(http_get_twitter($request_timeline, $params_timeline));
-echo json_encode(http_get_instagram($request_media, $params_media));
+if (strlen($handle_twitter)) {
+    echo json_encode(http_get_twitter($request_timeline, $params_timeline));
+}
+if (strlen($handle_instagram)) {
+    echo json_encode(http_get_instagram($request_media, $params_media));
+}
 
 function http_get_twitter($path, $params)
 {
@@ -61,13 +74,6 @@ function http_get_instagram($path, $params)
     $params['access_token'] = $token_instagram;
     $json = file_get_contents($api_instagram . $path . '?' . http_build_query($params), false, $context);
     return json_decode($json, true);
-}
-
-function get_user_id_instagram($username)
-{
-    $url = 'https://www.instagram.com/' . $username . '/?__a=1';
-    $json = file_get_contents($url);
-    return json_decode($json, true)['graphql']['user']['id'];
 }
 
 //function auth_twitter()

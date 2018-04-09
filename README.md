@@ -3,6 +3,12 @@ Social media content curator.
 
 Supports Twitter timeline and Instagram recent media.
 
+## Note
+
+Due to **[Instagram's recent API change](https://www.instagram.com/developer/changelog/)**, only the token owner's recent media can be curated.
+
+*Support for other sandbox users coming soon.*
+
 ## How to Use
 Example of `secret.php`:
 
@@ -18,7 +24,7 @@ $SECRET_T = '...';
 // Instagram Client Secret
 $SECRET_I = '...';
 
-// Instagram code needed for acquiring the access_token
+// Instagram CODE needed for acquiring the access_token
 // Visit the link below to get the access_token:
 // https://api.instagram.com/oauth/authorize/?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&scope=public_content
 $CODE_I = '...';
