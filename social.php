@@ -1,10 +1,11 @@
 <?php
 /**
  * TC Social Feed
- * @version v0.3.0
+ * @version v0.4.0
  * @author Jonathan Dasheng Zhang (zhang10@tc.columbia.edu)
  */
 require_once('secret.php');
+// require_once('twitter_helper.php');
 
 $api_twitter = 'https://api.twitter.com';
 $api_instagram = 'https://api.instagram.com';
@@ -33,7 +34,8 @@ if (isset($_REQUEST['instagram'])) {
 $request_timeline = '/1.1/statuses/user_timeline.json';
 $params_timeline = array(
     'screen_name' => $handle_twitter,
-    'count' => '3'
+    'exclude_replies' => true,
+    'include_rts' => false
 );
 
 $request_media = '/v1/users/self/media/recent';
@@ -42,10 +44,42 @@ $params_media = array(
 );
 
 if (strlen($handle_twitter)) {
-    echo json_encode(http_get_twitter($request_timeline, $params_timeline));
+    echo json_encode(
+        process_twitter_data(
+            http_get_twitter($request_timeline, $params_timeline)
+        )
+    );
 }
 if (strlen($handle_instagram)) {
     echo json_encode(http_get_instagram($request_media, $params_media));
+}
+
+function process_twitter_data($data) {
+    $tweets = Array();
+    foreach ($data as $tweet) {
+        $t = Array();
+        $t["date"] = $tweet["created_at"];
+        $t["text"] = $tweet["text"];
+        $t["retweet_count"] = $tweet["retweet_count"];
+        $t["favorite_count"] = $tweet["favorite_count"];
+        $t["user"] = $tweet["user"]["screen_name"];
+        // the urls in entities are sometimes missing (eg. in media posts),
+        // so we need to grab the url in the tweet
+        preg_match('/https?:\/\/[^ ]*/', $tweet["text"], $matches_url);
+        $tweet_url = '';
+        if (count($matches_url)) $tweet_url = $matches_url[0];
+        $t["tweet_url"] = $tweet_url;
+        // support only one url for now
+        // $tweet_urls = $tweet["entities"]["urls"];
+        // $tweet_url = '';
+        // if (count($tweet_urls)) $tweet_url = $tweet_urls[0]["url"];
+        // $t["tweet_url"] = $tweet_url;
+        // For later, need to configure php.ini
+        // if (strlen($tweet_url)) array_merge($t, get_tweet_and_meta($tweet_url));
+        // Add this tweet in the tweets array
+        array_push($tweets, $t);
+    }
+    return $tweets;
 }
 
 function http_get_twitter($path, $params)
