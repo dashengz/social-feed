@@ -1,7 +1,7 @@
 <?php
 /**
  * TC Social Feed
- * @version v0.4.0
+ * @version v0.5.0
  * @author Jonathan Dasheng Zhang (zhang10@tc.columbia.edu)
  */
 require_once('secret.php');
@@ -43,18 +43,20 @@ $params_media = array(
     'count' => '3'
 );
 
+$response = Array();
+
 if (strlen($handle_twitter)) {
-    echo json_encode(
-        process_twitter_data(
-            http_get_twitter($request_timeline, $params_timeline)
-        )
-    );
+    $response["twitter"] = process_twitter_data(http_get_twitter($request_timeline, $params_timeline));
 }
 if (strlen($handle_instagram)) {
-    echo json_encode(http_get_instagram($request_media, $params_media));
+    $response["instagram"] = process_instagram_data(http_get_instagram($request_media, $params_media));
 }
 
-function process_twitter_data($data) {
+if (count($response)) echo json_encode($response);
+
+
+function process_twitter_data($data)
+{
     $tweets = Array();
     foreach ($data as $tweet) {
         $t = Array();
@@ -69,17 +71,37 @@ function process_twitter_data($data) {
         $tweet_url = '';
         if (count($matches_url)) $tweet_url = $matches_url[0];
         $t["tweet_url"] = $tweet_url;
-        // support only one url for now
-        // $tweet_urls = $tweet["entities"]["urls"];
-        // $tweet_url = '';
-        // if (count($tweet_urls)) $tweet_url = $tweet_urls[0]["url"];
-        // $t["tweet_url"] = $tweet_url;
+        // entities
+//        $t["entities"] = $tweet["entities"];
         // For later, need to configure php.ini
         // if (strlen($tweet_url)) array_merge($t, get_tweet_and_meta($tweet_url));
+
         // Add this tweet in the tweets array
         array_push($tweets, $t);
     }
     return $tweets;
+}
+
+function process_instagram_data($data)
+{
+    $instas = Array();
+    foreach ($data["data"] as $insta) {
+        $i = Array();
+        $i["user"] = $insta["user"]["username"];
+        $i["date"] = $insta["created_time"];
+        $i["caption"] = "";
+        if ($insta["caption"]) $i["caption"] = $insta["caption"]["text"];
+        $i["type"] = $insta["type"];
+        $i["link"] = $insta["link"];
+        $i["tags"] = $insta["tags"];
+        $i["location"] = "";
+        if ($insta["location"]) $i["location"] = $insta["location"]["name"];
+        $i["image"] = $insta["images"]["standard_resolution"]["url"];
+
+        // Add this insta in the instas array
+        array_push($instas, $i);
+    }
+    return $instas;
 }
 
 function http_get_twitter($path, $params)
