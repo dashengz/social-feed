@@ -1,7 +1,7 @@
 <?php
 /**
  * TC Social Feed
- * @version v0.5.0
+ * @version v1.0.0
  * @author Jonathan Dasheng Zhang (zhang10@tc.columbia.edu)
  */
 require_once('secret.php');
@@ -40,7 +40,7 @@ $params_timeline = array(
 
 $request_media = '/v1/users/self/media/recent';
 $params_media = array(
-    'count' => '3'
+    'count' => '9'
 );
 
 $response = Array();
@@ -61,7 +61,7 @@ function process_twitter_data($data)
     foreach ($data as $tweet) {
         $t = Array();
         $t["date"] = $tweet["created_at"];
-        $t["text"] = $tweet["text"];
+        $t["text"] = $tweet["full_text"];
         $t["retweet_count"] = $tweet["retweet_count"];
         $t["favorite_count"] = $tweet["favorite_count"];
         $t["user"] = $tweet["user"]["screen_name"];
@@ -72,7 +72,7 @@ function process_twitter_data($data)
         if (count($matches_url)) $tweet_url = $matches_url[0];
         $t["tweet_url"] = $tweet_url;
         // entities
-//        $t["entities"] = $tweet["entities"];
+        $t["entities"] = $tweet["entities"];
         // For later, need to configure php.ini
         // if (strlen($tweet_url)) array_merge($t, get_tweet_and_meta($tweet_url));
 
@@ -88,7 +88,8 @@ function process_instagram_data($data)
     foreach ($data["data"] as $insta) {
         $i = Array();
         $i["user"] = $insta["user"]["username"];
-        $i["date"] = $insta["created_time"];
+        // Convert to milliseconds
+        $i["date"] = $insta["created_time"] . "000";
         $i["caption"] = "";
         if ($insta["caption"]) $i["caption"] = $insta["caption"]["text"];
         $i["type"] = $insta["type"];
@@ -114,6 +115,8 @@ function http_get_twitter($path, $params)
         )
     );
     $context = stream_context_create($opts);
+    // support for extended tweets
+    $params['tweet_mode'] = 'extended';
     $json = file_get_contents($api_twitter . $path . '?' . http_build_query($params), false, $context);
     return json_decode($json, true);
 }
